@@ -6,6 +6,8 @@ import {
     getNGOProfile,
     updateNGOProfile,
 } from '../controllers/ngo.controller.js';
+
+//Todo: Make auth.controller.js
 import {authenticateNGO} from '../middlewares/auth.middleware.js';
 
 const router = Router();

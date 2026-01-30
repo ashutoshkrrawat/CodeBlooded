@@ -1,8 +1,9 @@
-import NGO from '../model/ngo.model.js';
+import NGO from '../model/Ngo.model.js';
 import {asyncHandler} from '../utility';
-import statusCode from '../constants';
+import statusCode from '../constants/statusCode.js';
 import {ApiResponse} from '../utility/';
 import {ApiError} from '../utility';
+import cookieOptions from '../constants/cookieOptions.js';
 
 export const registerNGO = asyncHandler(async (req, res) => {
     const data = req.body;
@@ -65,17 +66,8 @@ export const loginNGO = asyncHandler(async (req, res) => {
     ngo.refreshToken = refreshToken;
     await ngo.save();
 
-    res.cookie('accessToken', accessToken, {
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'Strict',
-        maxAge: 15 * 60 * 1000, // 15 minutes
-    })
-        .cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'Strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        })
+    res.cookie('accessToken', accessToken, cookieOptions)
+        .cookie('refreshToken', refreshToken, cookieOptions)
         .status(statusCode.OK)
         .json(
             new ApiResponse(
