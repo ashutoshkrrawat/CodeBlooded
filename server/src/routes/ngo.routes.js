@@ -5,6 +5,8 @@ import {
     loginNGO,
     getNGOProfile,
     updateNGOProfile,
+    raiseManualIssue,
+    deleteIssue,
 } from '../controllers/ngo.controller.js';
 
 //Todo: Make auth.controller.js
@@ -16,5 +18,8 @@ router.post('/register', registerNGO);
 router.post('/login', loginNGO);
 router.get('/profile', authenticateNGO, getNGOProfile);
 router.put('/profile', authenticateNGO, updateNGOProfile);
+
+router.post('/raiseIssue', authenticateNGO, raiseManualIssue);
+router.delete('/deleteIssue/:issueId', authenticateNGO, deleteIssue);
 
 export default router;

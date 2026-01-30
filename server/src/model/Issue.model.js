@@ -18,13 +18,14 @@ const issueSchema = new mongoose.Schema(
             index: true,
         },
         severity: {
-            type: String,
+            type: Number,
             required: true,
             trim: true,
         },
         pinCode: {
             type: String,
             trim: true,
+            required: true,
             index: true,
         },
         location: {
@@ -35,6 +36,26 @@ const issueSchema = new mongoose.Schema(
         date: {
             type: Date,
             required: true,
+        },
+        handledBy: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'NGO',
+            },
+        ],
+        isEmailSent: {
+            type: Boolean,
+            default: false,
+            index: true,
+        },
+        // Below are for manual issue creation by NGOs
+        raisedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'NGO',
+        },
+        fundsRequired: {
+            type: Number,
+            min: 0,
         },
     },
     {timestamps: true}
