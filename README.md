@@ -65,20 +65,7 @@ Our goal is to **bridge the gap between crisis detection, resource allocation, a
 
 ## 🏗️ System Architecture (High Level)
 
-News Sources
-↓
-Web Scraper
-↓
-ML & NLP Pipeline (FastAPI)
-↓
-Crisis Scoring & Geo-tagging
-↓
-NGO Ranking Engine
-↓
-Web Platform (MERN)
-↓
-Donations & Reports
-
+News Sources → Web Scraper → ML & NLP Pipeline (FastAPI) → Crisis Scoring & Geo-tagging → NGO Ranking Engine → Web Platform (MERN) → Donations & Reports
 
 ---
 
