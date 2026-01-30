@@ -19,9 +19,10 @@ export const getRecommendedNGOs = asyncHandler(async (req, res) => {
         .map((ngo) => {
             // Filter issues relevant to this NGO
             const relevantIssues = activeIssues.filter((issue) => {
-                if (!issue.location || !ngo.address) return false;
+                if (!issue.aiAnalysis?.location?.name || !ngo.address)
+                    return false;
 
-                const issueLoc = issue.location.toLowerCase();
+                const issueLoc = issue.aiAnalysis.location.name.toLowerCase();
                 const ngoAddr = ngo.address.toLowerCase();
 
                 return ngoAddr.includes(issueLoc) || issueLoc.includes(ngoAddr);
@@ -82,11 +83,11 @@ export const getRecommendedNGOs = asyncHandler(async (req, res) => {
     return res.status(statusCode.OK).json(
         new ApiResponse(
             statusCode.OK,
+            'NGO recommendations based on funds and local crisis severity',
             {
                 count: evaluatedNGOs.length,
                 listing: evaluatedNGOs,
-            },
-            'NGO recommendations based on funds and local crisis severity'
+            }
         )
     );
 });

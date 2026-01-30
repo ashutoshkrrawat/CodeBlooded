@@ -1,7 +1,7 @@
 import {useState, useEffect} from 'react';
 import {Card} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
-import {Share2, TrendingUp, Heart, Users, Clock} from 'lucide-react';
+import {TrendingUp, Heart, Users, Clock} from 'lucide-react';
 import {CircularProgressbar, buildStyles} from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import {
@@ -13,42 +13,20 @@ import {
 } from '@/components/ui/select';
 import {toast} from 'sonner';
 
-const donors = [
-    {name: 'Tim Houldey', amount: 30, recent: true, avatar: '/avatars/tim.png'},
-    {
-        name: 'Clive Forrester',
-        amount: 10000,
-        top: true,
-        avatar: '/avatars/clive.png',
-    },
-    {
-        name: 'Michael Angus',
-        amount: 100,
-        time: '11 mins',
-        avatar: '/avatars/michael.png',
-    },
-    {name: 'Anonymous', amount: 100, time: '6 mins', avatar: ''},
-    {
-        name: 'Adel Khalil',
-        amount: 93,
-        time: '29 mins',
-        avatar: '/avatars/adel.png',
-    },
-];
-
 export default function DonationPanel() {
     const [progress, setProgress] = useState(0);
-    const [imageError, setImageError] = useState({});
     const [selectedAmount, setSelectedAmount] = useState(null);
     const [customAmount, setCustomAmount] = useState('');
     const [liveCount, setLiveCount] = useState(774);
-    const [showShareMenu, setShowShareMenu] = useState(false);
-    const [selectedCampaign, setSelectedCampaign] = useState('');
+
+    const [ngos, setNgos] = useState([]);
+    const [selectedNgo, setSelectedNgo] = useState('');
+    const [loadingNgos, setLoadingNgos] = useState(false);
 
     const targetProgress = 51;
     const quickAmounts = [500, 1000, 2500, 5000];
 
-    // Load Razorpay
+    /* Load Razorpay */
     useEffect(() => {
         if (window.Razorpay) return;
         const script = document.createElement('script');
@@ -57,13 +35,13 @@ export default function DonationPanel() {
         document.body.appendChild(script);
     }, []);
 
-    // Animate progress
+    /* Animate progress */
     useEffect(() => {
         const t = setTimeout(() => setProgress(targetProgress), 100);
         return () => clearTimeout(t);
     }, []);
 
-    // Live donation count
+    /* Live donation count */
     useEffect(() => {
         const i = setInterval(() => {
             setLiveCount((p) => p + Math.floor(Math.random() * 3));
@@ -71,14 +49,53 @@ export default function DonationPanel() {
         return () => clearInterval(i);
     }, []);
 
+    /* Fetch NGO recommendations */
+    useEffect(() => {
+        const fetchNgos = async () => {
+            try {
+                setLoadingNgos(true);
+                const res = await fetch(
+                    import.meta.env.VITE_SERVER_URL +
+                        '/api/v1/recommendation',
+                    {
+                        method: 'GET',
+                        credentials: 'include',
+                    }
+                );
+
+                const result = await res.json();
+
+                if (result?.success) {
+                    console.log(result);
+                    setNgos(result?.data?.listing);
+                } else {
+                    toast.error('Failed to load NGO list');
+                }
+            } catch (err) {
+                toast.error('Failed to load NGO list');
+            } finally {
+                setLoadingNgos(false);
+            }
+        };
+
+        fetchNgos();
+    }, []);
+
     const handleDonate = async () => {
         const amount = selectedAmount || Number(customAmount);
-        if (!amount) return;
 
-        const ngoId = '697c65a36cb5f015d52bd246'; //Todo: Fix this
+        if (!selectedNgo) {
+            toast.error('Please select an NGO');
+            return;
+        }
+
+        if (!amount || amount <= 0) {
+            toast.error('Enter a valid amount');
+            return;
+        }
 
         try {
-            // 1. Create order
+            /* Create order */
             const res = await fetch(
                 import.meta.env.VITE_SERVER_URL +
                     '/api/v1/payment/create-order',
@@ -88,24 +105,24 @@ export default function DonationPanel() {
                     credentials: 'include',
                     body: JSON.stringify({
                         amount,
-                        campaign: selectedCampaign,
-                        ngoId: ngoId
+                        ngoId: selectedNgo,
                     }),
                 }
             );
 
             const data = await res.json();
+
             if (!data?.data?.id) {
                 toast.error('Unable to initiate payment');
                 return;
             }
 
-            // 2. Open Razorpay
+            /* Razorpay checkout */
             const options = {
                 key: import.meta.env.VITE_RAZORPAY_KEY_ID,
                 amount: data.data.amount,
                 currency: 'INR',
-                order_id: data?.data?.id,
+                order_id: data.data.id,
                 name: 'NGO Donation',
                 description: 'Thank you for making a difference',
 
@@ -122,15 +139,12 @@ export default function DonationPanel() {
                     );
 
                     const result = await verify.json();
+
                     if (result.success) {
                         toast.success('Payment successful 💚');
                     } else {
                         toast.error('Payment verification failed');
                     }
-                },
-
-                modal: {
-                    ondismiss: () => console.log('Checkout closed'),
                 },
 
                 theme: {color: '#7c3aed'},
@@ -139,7 +153,6 @@ export default function DonationPanel() {
             const rzp = new window.Razorpay(options);
             rzp.open();
         } catch (err) {
-            console.error(err);
             toast.error('Payment failed');
         }
     };
@@ -181,21 +194,25 @@ export default function DonationPanel() {
                     </div>
                 </div>
 
-                {/* CAMPAIGN */}
-                <Select
-                    value={selectedCampaign}
-                    onValueChange={setSelectedCampaign}
-                >
+                {/* NGO SELECT */}
+                <Select value={selectedNgo} onValueChange={setSelectedNgo}>
                     <SelectTrigger className="rounded-full py-6">
-                        <SelectValue placeholder="Choose a cause" />
+                        <SelectValue
+                            placeholder={
+                                loadingNgos
+                                    ? 'Finding urgent NGOs...'
+                                    : 'Choose NGO (AI recommended)'
+                            }
+                        />
                     </SelectTrigger>
+
                     <SelectContent>
-                        <SelectItem value="disaster">
-                            🌊 Disaster Relief
-                        </SelectItem>
-                        <SelectItem value="education">📚 Education</SelectItem>
-                        <SelectItem value="health">🏥 Health Care</SelectItem>
-                        <SelectItem value="ngo">🤝 NGO Support</SelectItem>
+                        {ngos.map((ngo) => (
+                            <SelectItem key={ngo._id} value={ngo._id}>
+                                {ngo.name} • Urgency{' '}
+                                {ngo.metrics.urgencyScore}
+                            </SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
 
@@ -231,7 +248,9 @@ export default function DonationPanel() {
 
                 {/* DONATE */}
                 <Button
-                    disabled={!selectedAmount && !customAmount}
+                    disabled={
+                        !selectedNgo || (!selectedAmount && !customAmount)
+                    }
                     onClick={handleDonate}
                     className="w-full mt-4 rounded-full py-6 flex gap-2"
                 >

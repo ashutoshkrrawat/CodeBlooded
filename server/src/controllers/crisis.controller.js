@@ -44,15 +44,6 @@ export const handleCrisisReporting = async (
         coordinates: [0, 0],
     };
 
-<<<<<<< HEAD
-    // Use refined Gemini output for coordinates
-    if (aiResult?.location?.coordinates?.lat && aiResult?.location?.coordinates?.lon) {
-        geoCoordinates.coordinates = [
-            aiResult.location.coordinates.lon,
-            aiResult.location.coordinates.lat,
-        ];
-    }
-=======
     // Try to get coordinates from ML or Geocoder
     // if (locationData?.coordinates?.lat && locationData?.coordinates?.lon) {
     //     geoCoordinates.coordinates = [
@@ -65,7 +56,6 @@ export const handleCrisisReporting = async (
     //         locationData.coordinates.lat,
     //     ];
     // }
->>>>>>> 5ba5f4263f897ab3d961429f4c7e81ebcd3d13a8
 
     // Fallback Geocoding
     if (

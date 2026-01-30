@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import {Link, useNavigate} from 'react-router-dom';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ export default function LoginUser() {
     email: "",
     password: "",
   });
+
+  const navigate = useNavigate();
 
   const handleChange = (key, value) => {
     setForm({ ...form, [key]: value });
@@ -35,6 +37,8 @@ export default function LoginUser() {
       if (!res.ok) throw new Error("Login failed");
 
       toast.success("Logged in successfully");
+      localStorage.setItem('role', 'user')
+        window.location.href = '/';
       // later → redirect to dashboard
     } catch (err) {
       console.error(err);

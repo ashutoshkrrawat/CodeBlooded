@@ -5,13 +5,16 @@ import {Toaster} from '@/components/ui/sonner';
 function Layout() {
     return (
         <>
-            <div className="min-h-screen flex flex-col">
+            <div className="">
                 <Header />
-                <main className="flex-1 flex flex-col">
+                {/* Spacer to prevent content from going under fixed header */}
+                <div className="h-24" />
+                <main className="">
                     <Outlet />
                 </main>
             </div>
             <Footer />
+            <Toaster />
         </>
     );
 }

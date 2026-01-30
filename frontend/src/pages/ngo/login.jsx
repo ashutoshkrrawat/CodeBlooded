@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 
 import { Mail, ShieldCheck } from "lucide-react";
-import { Link } from "react-router-dom";
+import {Link, useNavigate} from 'react-router-dom';
 import {toast} from 'sonner';
 
 export default function LoginNGO() {
@@ -14,6 +14,8 @@ export default function LoginNGO() {
     email: "",
     password: "",
   });
+
+  const navigate = useNavigate();
 
   const handleChange = (key, value) => {
     setForm({ ...form, [key]: value });
@@ -38,6 +40,9 @@ export default function LoginNGO() {
 
       // handle success later (token, redirect, etc.)
       toast.success("Logged in successfully!");
+      localStorage.setItem('role', 'ngo');
+      window.location.href = '/';
+      // navigate('/')
     } catch (err) {
       toast.error(err?.message || err);
     } finally {
