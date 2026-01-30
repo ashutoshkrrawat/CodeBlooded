@@ -4,6 +4,7 @@ import {connectToDatabase, connectToNgrok} from './connection/index.js';
 import app from './app.js';
 import initializeSocket from './sockets/index.js';
 import registerSockets from './sockets/socket.js';
+import {startIssueCron} from './cron/issue.cron.js';
 
 dotenv.config({
     path: `./.env`,
@@ -18,6 +19,9 @@ registerSockets(io);
 connectToDatabase().then(() => {
     httpServer.listen(port, () => {
         console.log(`✅ Server is running on port ${port}`);
+
+        //! Starting all the CRON Jobs
+        startIssueCron();
     });
 });
 

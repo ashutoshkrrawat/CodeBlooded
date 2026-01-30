@@ -110,7 +110,5 @@ ngoSchema.methods.generateRefreshToken = function () {
     );
 };
 
-
-
 const NGO = mongoose.model('NGO', ngoSchema);
 export default NGO;
