@@ -104,6 +104,7 @@ Donations & Reports
 
 - AI-driven decision making
 - Explainable ML outputs
+- NGO performance scoring
 - Secure and verified donations
 - NGO transparency through AI
 - Scalable microservice-based architecture
@@ -123,15 +124,8 @@ Donations & Reports
 ## 📌 Future Scope
 
 - Real-time satellite data integration
-- NGO performance scoring
 - Government dashboard
 - Blockchain-based report immutability
 - Predictive disaster risk modeling
-
----
-
-## 🤝 Contributors
-
-Built with ❤️ by a team passionate about using **technology for social impact**.
 
 ---
