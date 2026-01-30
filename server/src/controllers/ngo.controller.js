@@ -7,15 +7,18 @@ import cookieOptions from '../constants/cookieOptions.js';
 import Issue from '../model/Issue.model.js';
 import Report from '../model/Report.model.js';
 import {uploadToCloudinary} from '../services/cloudinary.service.js';
+import {analyzeCrisis} from '../services/ml.service.js';
 
 export const registerNGO = asyncHandler(async (req, res) => {
-    const data = req.body;
-    const {name, type, email, password, about, website} = req.body;
+    const {name, type, email, password, address, phone, about, website} =
+        req.body;
 
-    if (!name || !type || !email || !password) {
+    // Required fields check
+    if (!name || !type || !email || !password || !address || !phone) {
         throw new ApiError(statusCode.BAD_REQUEST, 'Missing required fields');
     }
 
+    // Check if NGO already exists
     const existingNGO = await NGO.findOne({email});
     if (existingNGO) {
         throw new ApiError(
@@ -24,35 +27,42 @@ export const registerNGO = asyncHandler(async (req, res) => {
         );
     }
 
-    const newNGO = new NGO({name, type, email, password, about, website});
-    await newNGO.save();
+    // Create NGO
+    const newNGO = await NGO.create({
+        name,
+        type,
+        email,
+        password,
+        address,
+        phone,
+        about,
+        website,
+    });
 
-    return res
-        .status(statusCode.CREATED)
-        .json(
-            new ApiResponse(
-                statusCode.CREATED,
-                {NGOcode: newNGO.NGOcode},
-                'NGO registered successfully'
-            )
-        );
+    return res.status(statusCode.CREATED).json(
+        new ApiResponse(
+            statusCode.CREATED,
+            {
+                NGOcode: newNGO.NGOcode,
+                email: newNGO.email,
+            },
+            'NGO registered successfully'
+        )
+    );
 });
 
-export const loginNGO = asyncHandler(async (req, res) => {
-    const {ngoCode, email, password} = req.body;
 
-    if ((!ngoCode && !email) || !password) {
+export const loginNGO = asyncHandler(async (req, res) => {
+    const {email, password} = req.body;
+
+    if (!email || !password) {
         throw new ApiError(
             statusCode.BAD_REQUEST,
-            'NGO Code or Email and password are required'
+            'Email and password are required'
         );
     }
 
-    const ngo = ngoCode
-        ? await NGO.findOne({NGOcode: ngoCode}).select(
-              '+password +refreshToken'
-          )
-        : await NGO.findOne({email}).select('+password +refreshToken');
+    const ngo = await NGO.findOne({email}).select('+password +refreshToken');
 
     if (!ngo) {
         throw new ApiError(statusCode.NOT_FOUND, 'NGO not found');
@@ -75,7 +85,7 @@ export const loginNGO = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 statusCode.OK,
-                {ngoCode: ngo.NGOcode},
+                {ngoId: ngo?._id, email: ngo?.email},
                 'NGO logged in successfully'
             )
         );
@@ -180,8 +190,16 @@ export const updateNGOProfile = asyncHandler(async (req, res) => {
 export const raiseManualIssue = asyncHandler(async (req, res) => {
     const ngoCode = req.ngoCode;
 
-    const {title, description, type, severity, pinCode, location, date, fundsRequired} =
-        req.body;
+    const {
+        title,
+        description,
+        type,
+        severity,
+        pinCode,
+        location,
+        date,
+        fundsRequired,
+    } = req.body;
 
     if (!ngoCode) {
         throw new ApiError(statusCode.BAD_REQUEST, 'NGO Code is required');
@@ -207,8 +225,18 @@ export const raiseManualIssue = asyncHandler(async (req, res) => {
         fundsRequired,
         date: new Date(date),
         raisedBy: ngo._id,
-        handledBy: ngo._id
+        handledBy: ngo._id,
     });
+
+    // Run AI analysis asynchronously
+    analyzeCrisis(description, 'manual_ngo', location)
+        .then(async (result) => {
+            if (result) {
+                issue.aiAnalysis = result;
+                await issue.save();
+            }
+        })
+        .catch((err) => console.error('Background AI analysis failed:', err));
 
     return res
         .status(statusCode.CREATED)
@@ -368,4 +396,3 @@ export const uploadReportImages = asyncHandler(async (req, res) => {
         )
     );
 });
-

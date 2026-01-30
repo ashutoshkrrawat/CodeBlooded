@@ -7,7 +7,6 @@ const ISSUE_API_URL = process.env.MODEL_SERVER_URL;
 let cronStarted = false;
 
 // Calls the API to fetch all the ongoing issues at 10 AM everyday
-
 // Fetches all the issues from the Model_Server and all deletes one month old issues
 export const startIssueCron = () => {
 

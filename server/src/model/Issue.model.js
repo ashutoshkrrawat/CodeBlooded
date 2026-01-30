@@ -17,10 +17,17 @@ const issueSchema = new mongoose.Schema(
             required: true,
             index: true,
         },
+        status: {
+            type: String,
+            enum: ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'FALSE_ALARM'],
+            default: 'OPEN',
+            index: true,
+        },
         severity: {
             type: Number,
             required: true,
-            trim: true,
+            min: 0,
+            max: 1,
         },
         pinCode: {
             type: String,
@@ -33,8 +40,21 @@ const issueSchema = new mongoose.Schema(
             required: true,
             trim: true,
         },
+        // GeoJSON for proximity searches
+        coordinates: {
+            type: {
+                type: String,
+                enum: ['Point'],
+                default: 'Point',
+            },
+            coordinates: {
+                type: [Number], // [longitude, latitude]
+                index: '2dsphere',
+            },
+        },
         date: {
             type: Date,
+            default: Date.now,
             required: true,
         },
         handledBy: [
@@ -43,6 +63,9 @@ const issueSchema = new mongoose.Schema(
                 ref: 'NGO',
             },
         ],
+        aiAnalysis: {
+            type: mongoose.Schema.Types.Mixed,
+        },
         isEmailSent: {
             type: Boolean,
             default: false,
@@ -56,7 +79,15 @@ const issueSchema = new mongoose.Schema(
         fundsRequired: {
             type: Number,
             min: 0,
+            default: 0,
         },
+        resourcesRequired: [
+            {
+                resourceType: String,
+                quantity: Number,
+                unit: String,
+            },
+        ],
     },
     {timestamps: true}
 );

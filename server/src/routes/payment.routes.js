@@ -6,10 +6,11 @@ import {
     paymentFailed,
     getPaymentDetails,
 } from '../controllers/payment.controller.js';
+import {verifyAccessToken} from '../middlewares/index.js';
 
 const router = Router();
 
-router.post('/create-order', createPaymentOrder);
+router.post('/create-order', verifyAccessToken, createPaymentOrder);
 router.post('/verify', verifyPayment);
 router.post('/failed', paymentFailed);
 router.get('/:orderId', getPaymentDetails);

@@ -10,6 +10,7 @@ import LoginNgo from './pages/ngo/login.jsx';
 import SignupUser from './pages/user/Signup';
 import LoginUser from './pages/user/Login.jsx';
 import Donate from './pages/Donate.jsx';
+import SubmitReport from './pages/ngo/SubmitReport.jsx';
 
 const router = createBrowserRouter([
     {
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
             {
                 path: 'donate',
                 element: <Donate />,
+            },
+            {
+                path: '/ngo/report',
+                element: <SubmitReport />,
             },
             {
                 path: '*',

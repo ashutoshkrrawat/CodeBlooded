@@ -1,48 +1,36 @@
 .pulse {
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   position: relative;
-}
-
-.pulse::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  animation: pulse 1.6s infinite;
-  opacity: 0.6;
+  animation: pulse 2s infinite;
+  background-color: rgba(255, 255, 255, 0.6); /* Default red; override per type */
 }
 
 @keyframes pulse {
   0% {
     transform: scale(1);
-    opacity: 0.7;
+    opacity: 0;
   }
+  /* 50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  } */
   100% {
     transform: scale(4);
-    opacity: 0;
+    opacity: 1;
   }
 }
 
-/* Category colors */
+/* Type-specific overrides */
 .pulse.disaster {
-  background: #ef4444;
-}
-.pulse.disaster::after {
-  background: rgba(239, 68, 68, 0.5);
+  background-color: rgb(255, 255, 255);
 }
 
 .pulse.crisis {
-  background: #f59e0b;
-}
-.pulse.crisis::after {
-  background: rgba(245, 158, 11, 0.5);
+  background-color: rgb(255, 255, 255);
 }
 
 .pulse.ngo {
-  background: #22c55e;
-}
-.pulse.ngo::after {
-  background: rgba(34, 197, 94, 0.5);
+  background-color: rgb(255, 255, 255);
 }

@@ -8,6 +8,7 @@ import webhookRoutes from './routes/webhook.routes.js';
 import userRoutes from './routes/user.routes.js';
 import ngoRoutes from './routes/ngo.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
+import crisisRoutes from './routes/crisis.routes.js';
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use('/api/v1/webhooks', webhookRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/ngo', ngoRoutes);
 app.use('/api/v1/payment', paymentRoutes);
+app.use('/api/v1/crisis', crisisRoutes);
 
 // Error Handling
 app.use(errorHandler());
