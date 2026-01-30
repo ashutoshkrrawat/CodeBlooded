@@ -1,14 +1,38 @@
-- Test verifyAccessToken.js
-- Test verifyAccessToken.middleware.js for sockets
-- Configure AI in the Backend
+# Payment
 
-## To be taken care of:
+- User gets a list of all the NGOs with Priority list based on location and urgency.
+- User selects an NGO to donate to.
+- User selects the amount to donate.
+- Now the payment is made through Razorpay gateway.
+## Flow for Payment
 
-- All the utility functions, response handling, error handling and async handler
-- Use of prettier to format before any commits (npm run format)
-- Configure mongodb atlas to use the server from any where
-- Use constants code for HTTP status code
-- Add documentation for all the API routes inside the api.md and Postman as well
-- Always add cookieOptions.js from the constants when setting any cookies!!!
-- Make the limit of the accessToken very large
-- Put the frontend link in .env by seperating it from commas in CORS_ORIGIN
+### Normal Successful Flow
+
+1. POST /api/payments/create-order
+2. Razorpay Checkout (frontend)
+3. POST /api/payments/verify
+4. Razorpay Webhook → payment.captured
+
+### If Client Verification Fails
+1. POST /api/payments/create-order
+2. Razorpay Checkout
+3. Razorpay Webhook → payment.captured
+
+### Failed Payment Flow
+1. POST /api/payments/create-order
+2. Razorpay Checkout fails
+3. Razorpay Webhook → payment.failed
+
+# Todo
+
+- Make auth.middleware.js to verify NGO
+- Validate cookieOptions
+
+# APIs Made
+
+- Authentication for User and NGO
+- Payment related api endpoints
+- CRON schedule to fetch issues and update it in DB, calls the model_server, to fetch the array of issues and creates it in the database. This can be handled by many NGOs at the same time.
+- Add manual issues by the NGOs. Can only be deleted by the NGO who created it.
+- Make Report Submission routes with image upload functionality
+- Todo: Report submission by NGO, emailSend to users and NGOs
