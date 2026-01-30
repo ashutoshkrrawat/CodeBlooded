@@ -40,7 +40,7 @@ class ExplanationGenerator:
     def generate(self, crisis_type: str, severity: Dict[str, float], 
                 urgency: Dict[str, Any], info_gaps: Dict[str, Any],
                 priority_score: float, text_snippet: str, 
-                location: str = "Chennai") -> Dict[str, Any]:
+                location: str = "") -> Dict[str, Any]:
         """
         Generate explanation for crisis analysis
         

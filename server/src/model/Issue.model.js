@@ -29,17 +29,6 @@ const issueSchema = new mongoose.Schema(
             min: 0,
             max: 1,
         },
-        pinCode: {
-            type: String,
-            trim: true,
-            required: true,
-            index: true,
-        },
-        location: {
-            type: String,
-            required: true,
-            trim: true,
-        },
         // GeoJSON for proximity searches
         coordinates: {
             type: {

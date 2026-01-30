@@ -6,12 +6,30 @@ import L from "leaflet";
 import { MAP_MARKERS } from "../../data/mapMarker";
 import "./map.css";
 
-const createPulseIcon = (type) =>
+const getRadarColorByType = (type) => {
+  if (type === "disaster") return "var(--accent-red)";
+  if (type === "crisis") return "var(--accent-orange)";
+  if (type === "ngo") return "var(--accent-green)";
+  return "var(--accent-cyan)";
+};
+
+const createRadarIcon = (type) =>
   L.divIcon({
     className: "",
-    html: `<div class="pulse ${type}"></div>`,
-    iconSize: [10, 10],
+    html: `
+      <div
+        class="radar-marker"
+        style="
+          background-color: ${getRadarColorByType(type)};
+          color: ${getRadarColorByType(type)};
+        "
+      ></div>
+    `,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
   });
+
+
 
 export default function IndiaMap() {
   const [activeLayers, setActiveLayers] = useState({
@@ -151,7 +169,7 @@ export default function IndiaMap() {
           <Marker
             key={m.id}
             position={[m.lat, m.lng]}
-            icon={createPulseIcon(type)}
+            icon={createRadarIcon(type)}
           />
         ))}
       </LayerGroup>

@@ -1,6 +1,15 @@
 import { Link } from "react-router-dom";
+import { useTheme } from "@/components/theme-provider";
+import { Button } from "@/components/ui/button";
+import { Sun, Moon } from "lucide-react";
 
 export default function Header() {
+  const { theme, setTheme } = useTheme();
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
+
   return (
     <header 
       className="flex items-center justify-between px-6 py-4 border-b"
@@ -31,6 +40,17 @@ export default function Header() {
 
       {/* Actions */}
       <div className="flex items-center gap-3">
+        {/* Dark Mode Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          aria-label="Toggle dark mode"
+        >
+          <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        </Button>
+
         <Link
           to="/signup/ngo"
           className="px-3 py-1.5 text-sm rounded-lg border"
@@ -49,7 +69,7 @@ export default function Header() {
             color: 'var(--primary-foreground)',
           }}
         >
-          Government / Donor
+          Sign Up
         </Link>
       </div>
     </header>

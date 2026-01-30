@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Upload, X, CheckCircle2, FileText, DollarSign, Users } from "lucide-react";
+import { Upload, X, CheckCircle2, FileText, DollarSign, Users, Camera } from "lucide-react";
 
 export default function SubmitReport() {
   const [form, setForm] = useState({
@@ -26,20 +26,100 @@ export default function SubmitReport() {
   
   const [uploadedImages, setUploadedImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [stream, setStream] = useState(null);
+  const [currentLocation, setCurrentLocation] = useState(null);
+  
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
 
   const handleChange = (key, value) => {
     setForm(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const newImages = files.map(file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      url: URL.createObjectURL(file),
-      file: file
-    }));
-    setUploadedImages(prev => [...prev, ...newImages]);
+  const openCamera = async () => {
+    try {
+      // Request camera access
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      
+      // Request location access
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCurrentLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+          setStream(mediaStream);
+          setIsCameraOpen(true);
+          
+          // Set video stream
+          setTimeout(() => {
+            if (videoRef.current) {
+              videoRef.current.srcObject = mediaStream;
+            }
+          }, 100);
+        },
+        (error) => {
+          // Stop camera if location denied
+          mediaStream.getTracks().forEach(track => track.stop());
+          alert("Location access is required to capture images. Please enable location permissions.");
+        }
+      );
+      
+    } catch (error) {
+      alert("Camera access is required. Please enable camera permissions.");
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current || !currentLocation) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw video frame to canvas
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Add location overlay
+    const fontSize = Math.max(canvas.width / 40, 16);
+    context.font = `bold ${fontSize}px Arial`;
+    context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    context.fillRect(10, canvas.height - fontSize - 30, canvas.width - 20, fontSize + 20);
+    
+    context.fillStyle = '#22c55e';
+    context.fillText(
+      `📍 ${currentLocation.latitude.toFixed(6)}, ${currentLocation.longitude.toFixed(6)}`,
+      20,
+      canvas.height - 15
+    );
+
+    // Convert canvas to blob and create image object
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const newImage = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: `capture_${Date.now()}.jpg`,
+        url: url,
+        file: blob,
+        location: { ...currentLocation }
+      };
+      setUploadedImages(prev => [...prev, newImage]);
+    }, 'image/jpeg', 0.95);
+  };
+
+  const closeCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setIsCameraOpen(false);
+    setStream(null);
   };
 
   const removeImage = (id) => {
@@ -47,25 +127,62 @@ export default function SubmitReport() {
   };
 
   const handleSubmit = async () => {
+  try {
     setIsSubmitting(true);
 
     const payload = {
       ...form,
       capitalUtilised: Number(form.capitalUtilised),
-      images: uploadedImages.map(img => img.url),
+      images: uploadedImages.map(img => ({
+        url: img.url,
+        location: img.location,
+      })),
       contributors: form.contributors
         ? form.contributors.split(",").map(c => c.trim())
         : [],
       issueSolved: form.issueSolved === "true",
     };
 
-    console.log("Submitting report:", payload);
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsSubmitting(false);
+    const res = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/ngo/report`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // IMPORTANT for cookies / auth
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data?.message || "Failed to submit report");
+    }
+
     alert("Report submitted successfully!");
-  };
+
+    // OPTIONAL: reset form after success
+    setForm({
+      title: "",
+      description: "",
+      content: "",
+      issueSolvedAt: "",
+      capitalUtilised: "",
+      contributors: "",
+      issueSolved: "false",
+    });
+    setUploadedImages([]);
+
+  } catch (error) {
+    console.error(error);
+    alert(error.message || "Something went wrong");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-[#f8fafc] relative overflow-hidden">
@@ -86,8 +203,49 @@ export default function SubmitReport() {
         </svg>
       </div>
 
-      {/* Decorative Blobs */}
-      
+      {/* Camera Modal */}
+      {isCameraOpen && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-3xl w-full space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-[#0f172a]">Capture Photo</h3>
+              <button
+                onClick={closeCamera}
+                className="w-10 h-10 rounded-full bg-[#ef4444] text-white flex items-center justify-center hover:bg-[#dc2626] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="relative bg-black rounded-xl overflow-hidden">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="w-full h-auto"
+              />
+            </div>
+
+            {currentLocation && (
+              <div className="text-sm text-[#64748b] text-center">
+                📍 Current Location: {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}
+              </div>
+            )}
+
+            <Button
+              onClick={capturePhoto}
+              className="w-full h-12 bg-gradient-to-r from-[#22c55e] to-[#16a34a] hover:from-[#16a34a] hover:to-[#15803d] text-white rounded-xl font-semibold"
+            >
+              <Camera className="w-5 h-5 mr-2" />
+              Capture Photo
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden canvas for image processing */}
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+
       <div className="relative py-8 px-4">
         <div className="max-w-4xl mx-auto space-y-6">
           {/* HEADER */}
@@ -240,44 +398,37 @@ export default function SubmitReport() {
               </div>
             </Card>
 
-            {/* IMAGE UPLOAD */}
+            {/* IMAGE CAPTURE */}
             <Card className="p-6 space-y-4 border-[#22c55e]/20 shadow-md bg-white/80 backdrop-blur-sm">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-lg bg-[#dcfce7] flex items-center justify-center flex-shrink-0">
-                  <Upload className="w-5 h-5 text-[#22c55e]" />
+                  <Camera className="w-5 h-5 text-[#22c55e]" />
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-[#0f172a] mb-1">
                     Visual Documentation
                   </h2>
                   <p className="text-sm text-[#64748b]">
-                    Upload photos from the field (before/after, distribution, beneficiaries)
+                    Capture photos from your camera with location data
                   </p>
                 </div>
               </div>
 
               <div>
-                <input
-                  type="file"
-                  id="image-upload"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                <label htmlFor="image-upload">
-                  <div className="border-2 border-dashed border-[#22c55e]/40 rounded-xl p-8 text-center cursor-pointer hover:border-[#22c55e] hover:bg-[#f0fdf4] transition-all">
-                    <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-[#dcfce7] flex items-center justify-center">
-                      <Upload className="w-7 h-7 text-[#22c55e]" />
-                    </div>
-                    <p className="text-sm font-medium text-[#0f172a] mb-1">
-                      Click to upload images
-                    </p>
-                    <p className="text-xs text-[#64748b]">
-                      PNG, JPG, JPEG up to 10MB each
-                    </p>
+                <div 
+                  onClick={openCamera}
+                  className="border-2 border-dashed border-[#22c55e]/40 rounded-xl p-8 text-center cursor-pointer hover:border-[#22c55e] hover:bg-[#f0fdf4] transition-all"
+                >
+                  <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-[#dcfce7] flex items-center justify-center">
+                    <Camera className="w-7 h-7 text-[#22c55e]" />
                   </div>
-                </label>
+                  <p className="text-sm font-medium text-[#0f172a] mb-1">
+                    Open Camera to Capture
+                  </p>
+                  <p className="text-xs text-[#64748b]">
+                    Photos will include location data
+                  </p>
+                </div>
               </div>
 
               {uploadedImages.length > 0 && (

@@ -1,14 +1,12 @@
 import axios from 'axios';
 
-const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
-
 export const analyzeCrisis = async (
     text,
     source = 'manual',
     location = 'Unknown'
 ) => {
     try {
-        const response = await axios.post(`${MODEL_SERVICE_URL}/analyze_crisis`, {
+        const response = await axios.post(`${process.env.MODEL_SERVER_URL}/analyze_crisis`, {
             text,
             source,
             location,

@@ -3,7 +3,6 @@ import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { ThemeProvider } from "@/components/theme-provider"
 import Layout from './Layout.jsx';
 
-
 import {createBrowserRouter, RouterProvider} from 'react-router-dom';
 import SignupNgo from './pages/ngo/Signup';
 import LoginNgo from './pages/ngo/Login.jsx';
@@ -13,6 +12,7 @@ import Donate from './pages/Donate.jsx';
 import SubmitReport from './pages/ngo/SubmitReport.jsx';
 import Analytics from './pages/Analytics.jsx';
 import Simulator from './pages/Simulator.jsx';
+import RaiseIssue from './pages/RaiseIssue.jsx';
 
 const router = createBrowserRouter([
     {
@@ -62,6 +62,10 @@ const router = createBrowserRouter([
             {
                 path: '/simulator',
                 element: <Simulator />,
+            },
+            {
+                path: '/issue',
+                element: <RaiseIssue />,
             },
             {
                 path: '*',

@@ -5,7 +5,6 @@ export default function DisasterCard({ issue }) {
 
   const {
     title,
-    location,
     date,
     status,
     aiAnalysis,
@@ -31,7 +30,7 @@ export default function DisasterCard({ issue }) {
             {title}
           </h3>
           <p className="text-xs text-[var(--muted-foreground)]">
-            {location} • {new Date(date).toLocaleString()}
+            {aiAnalysis.location.name} • {new Date(date).toLocaleString()}
           </p>
         </div>
 

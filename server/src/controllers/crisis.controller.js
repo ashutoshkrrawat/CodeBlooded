@@ -35,24 +35,37 @@ export const handleCrisisReporting = async (
         return {is_crisis: false, aiAnalysis: fullAnalysis};
     }
 
-    const detectedLocation = locationData?.name || location || 'Unknown';
+    // 2. New Issue Creation
+    const aiResult = await getRefinedAnalysis(text, rawAiResult);
+
+    const detectedLocation = aiResult?.location?.name || 'Unknown';
     let geoCoordinates = {
         type: 'Point',
         coordinates: [0, 0],
     };
 
-    // Try to get coordinates from ML or Geocoder
-    if (locationData?.coordinates?.lat && locationData?.coordinates?.lon) {
+<<<<<<< HEAD
+    // Use refined Gemini output for coordinates
+    if (aiResult?.location?.coordinates?.lat && aiResult?.location?.coordinates?.lon) {
         geoCoordinates.coordinates = [
-            locationData.coordinates.lon,
-            locationData.coordinates.lat,
-        ];
-    } else if (rawAiResult?.location?.coordinates?.lat) {
-        geoCoordinates.coordinates = [
-            rawAiResult.location.coordinates.lon,
-            rawAiResult.location.coordinates.lat,
+            aiResult.location.coordinates.lon,
+            aiResult.location.coordinates.lat,
         ];
     }
+=======
+    // Try to get coordinates from ML or Geocoder
+    // if (locationData?.coordinates?.lat && locationData?.coordinates?.lon) {
+    //     geoCoordinates.coordinates = [
+    //         locationData.coordinates.lon,
+    //         locationData.coordinates.lat,
+    //     ];
+    // } else if (rawAiResult?.location?.coordinates?.lat) {
+    //     geoCoordinates.coordinates = [
+    //         locationData.coordinates.lon,
+    //         locationData.coordinates.lat,
+    //     ];
+    // }
+>>>>>>> 5ba5f4263f897ab3d961429f4c7e81ebcd3d13a8
 
     // Fallback Geocoding
     if (
@@ -67,75 +80,11 @@ export const handleCrisisReporting = async (
                     geoRes[0].longitude,
                     geoRes[0].latitude,
                 ];
-            } else {
-                console.warn(
-                    `Geocoding returned no results for: ${detectedLocation}`
-                );
             }
         } catch (e) {
-            console.warn('Geocoding failed', e.message);
+            console.warn('Geocoding failed');
         }
     }
-
-    // 2. Duplicate Check
-    let existingIssue = null;
-    try {
-        const query = {
-            status: {$in: ['OPEN', 'IN_PROGRESS']},
-            type: mapCrisisTypeToEnum(type_classification?.type),
-        };
-
-        // If we have valid coordinates, use near query
-        if (geoCoordinates.coordinates[0] !== 0) {
-            query.coordinates = {
-                $near: {
-                    $geometry: geoCoordinates,
-                    $maxDistance: 20000, // 20km radius
-                },
-            };
-        } else {
-            // Fallback to strict location name match
-            query.location = {$regex: detectedLocation, $options: 'i'};
-        }
-
-        existingIssue = await Issue.findOne(query);
-    } catch (err) {
-        console.warn(
-            'Duplicate check failed (likely missing index). Proceeding as new issue.',
-            err.message
-        );
-    }
-
-    if (existingIssue) {
-        console.log(
-            `Found existing issue ${existingIssue._id}, checking for updates...`
-        );
-        const updateCheck = await checkCrisisUpdate(
-            text,
-            rawAiResult,
-            existingIssue
-        );
-
-        if (updateCheck.has_updates && updateCheck.updated_analysis) {
-            console.log('Updates found, modifying issue...');
-
-            const newAnalysis = updateCheck.updated_analysis;
-            existingIssue.aiAnalysis = newAnalysis;
-            existingIssue.severity = newAnalysis.severity.overall;
-            // Append update note
-            const dateStr = new Date().toLocaleString();
-            existingIssue.description = `[UPDATED ${dateStr}]\n${text}\n\n---\n\n${existingIssue.description}`;
-
-            await existingIssue.save();
-            return {is_crisis: true, status: 'updated', issue: existingIssue};
-        } else {
-            console.log('Duplicate report - no significant updates.');
-            return {is_crisis: true, status: 'duplicate', issue: existingIssue};
-        }
-    }
-
-    // 3. New Issue Creation
-    const aiResult = await getRefinedAnalysis(text, rawAiResult);
 
     const severityScore = aiResult.severity?.overall || 0;
     const crisisType = aiResult.type_classification?.type || 'Others';
@@ -149,8 +98,8 @@ export const handleCrisisReporting = async (
         description: text,
         type: mapCrisisTypeToEnum(crisisType),
         severity: severityScore,
-        pinCode: '000000',
-        location: detectedLocation,
+        // ❌ REMOVED: location: aiResult?.location.name,
+        // ✅ Use aiAnalysis.location.name instead on frontend
         coordinates: geoCoordinates,
         date: new Date(),
         aiAnalysis: aiResult,
@@ -179,6 +128,8 @@ export const processCrisisReport = asyncHandler(async (req, res) => {
         throw new ApiError(statusCode.INTERNAL_SERVER_ERROR, 'Analysis failed');
     }
 
+    console.log(result);
+
     if (!result.is_crisis) {
         return res.status(statusCode.OK).json(
             new ApiResponse(
@@ -199,20 +150,17 @@ export const processCrisisReport = asyncHandler(async (req, res) => {
         .status(
             result.status === 'created' ? statusCode.CREATED : statusCode.OK
         )
-        .json(
-            new ApiResponse(
+        .json({
+            statusCode:
                 result.status === 'created'
                     ? statusCode.CREATED
                     : statusCode.OK,
-                {
-                    issue: result.issue,
-                    status: result.status,
-                },
-                result.status === 'created'
-                    ? 'Crisis Report Created Successfully'
-                    : 'Crisis Report Updated Successfully'
-            )
-        );
+            data: {
+                issue: result.issue,
+                status: result.status,
+            },
+            success: true,
+        });
 });
 
 // Helper to map ML types to Schema Enum
