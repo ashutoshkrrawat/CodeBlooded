@@ -23,10 +23,8 @@ app.use(
 );
 
 app.use('/api/v1/webhooks/razorpay', express.raw({type: 'application/json'}));
-app.use('/api/v1/webhooks', webhookRoutes);
 
 app.use(express.json());
-
 app.use(express.urlencoded({extended: true}));
 app.use(express.static('public'));
 app.use(cookieParser());
@@ -35,6 +33,8 @@ app.use(cookieParser());
 
 app.get('/', checkHealth);
 app.get('/api/v1/check-health', checkHealth);
+
+app.use('/api/v1/webhooks', webhookRoutes);
 
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/ngo', ngoRoutes);

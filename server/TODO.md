@@ -32,5 +32,7 @@
 
 - Authentication for User and NGO
 - Payment related api endpoints
-- CRON schedule to fetch issues and update it in DB, calls the model_server, to fetch the array of issues and creates it in the database
-- Todo: Report submission by NGO, raise-issues, currentIssues, emailSend to users and NGOs
+- CRON schedule to fetch issues and update it in DB, calls the model_server, to fetch the array of issues and creates it in the database. This can be handled by many NGOs at the same time.
+- Add manual issues by the NGOs. Can only be deleted by the NGO who created it.
+- Make Report Submission routes with image upload functionality
+- Todo: Report submission by NGO, emailSend to users and NGOs

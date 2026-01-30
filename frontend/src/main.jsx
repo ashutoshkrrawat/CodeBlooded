@@ -4,6 +4,8 @@ import './index.css';
 import {Toaster} from '@/components/ui/sonner';
 import handleError from '@/utils/errorHandler';
 import { SocketProvider } from "./context/socketContent.jsx";
+import "leaflet/dist/leaflet.css";
+
 
 window.onerror = (msg, src, line, col, error) => {
     handleError(error || msg, 'Global Error');
