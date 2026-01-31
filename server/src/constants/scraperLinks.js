@@ -1,0 +1,1 @@
+export const etDisasterLink = 'https://economictimes.indiatimes.com/topic/Disasters';

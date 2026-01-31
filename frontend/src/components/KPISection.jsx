@@ -1,8 +1,10 @@
 import KPICard from "./KPICard";
+import Stagger from "./Stagger";
 
 export default function KPISection() {
   return (
     <section className="grid grid-cols-4 gap-5 px-6 mt-6">
+      <Stagger baseDelay={0.5}>
       <KPICard
         label="NGOs Connected"
         value={347}
@@ -27,6 +29,7 @@ export default function KPISection() {
         value={1294489}
         variant="indigo"
       />
+      </Stagger>
     </section>
   );
 }

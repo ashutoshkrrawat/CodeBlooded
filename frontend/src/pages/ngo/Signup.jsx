@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import {toast} from "sonner"
 
 import {
   Building2,
@@ -45,19 +46,20 @@ export default function RegisterNGO() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/v1/ngo/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(
+          import.meta.env.VITE_SERVER_URL + '/api/v1/ngo/register',
+          {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(form),
+          }
+      );
 
       if (!res.ok) throw new Error("Registration failed");
 
-      // success handling later
-      alert("NGO registered successfully!");
+      toast.success("NGO registered successfully!");
     } catch (err) {
-      console.error(err);
-      alert("Something went wrong");
+      toast.error(err?.message || err);
     } finally {
       setLoading(false);
     }

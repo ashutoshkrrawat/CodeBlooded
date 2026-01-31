@@ -17,6 +17,7 @@ import {
   Hash,
   MapPin,
 } from "lucide-react";
+import {toast} from 'sonner';
 
 export default function SignupUser() {
   const [loading, setLoading] = useState(false);
@@ -38,7 +39,7 @@ export default function SignupUser() {
     setLoading(true);
 
     try {
-      const res = await fetch(import.meta.env.VITE_SERVER_URL + "/user/signup", {
+      const res = await fetch(import.meta.env.VITE_SERVER_URL + "/api/v1/user/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -47,10 +48,10 @@ export default function SignupUser() {
 
       if (!res.ok) throw new Error("Signup failed");
 
-      alert("Account created successfully");
+      toast.success("Account created successfully");
     } catch (err) {
       console.error(err);
-      alert("Something went wrong");
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }

@@ -9,6 +9,10 @@ import userRoutes from './routes/user.routes.js';
 import ngoRoutes from './routes/ngo.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
 import crisisRoutes from './routes/crisis.routes.js';
+import scraperRoutes from './routes/scraper.routes.js';
+import recommendationRoutes from './routes/recommendation.routes.js';
+import reportAnalysisRoutes from './routes/reportAnalysis.route.js';
+import visitorRoutes from './routes/visitors.routes.js';
 
 const app = express();
 
@@ -34,13 +38,15 @@ app.use(cookieParser());
 
 app.get('/', checkHealth);
 app.get('/api/v1/check-health', checkHealth);
-
 app.use('/api/v1/webhooks', webhookRoutes);
-
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/ngo', ngoRoutes);
 app.use('/api/v1/payment', paymentRoutes);
 app.use('/api/v1/crisis', crisisRoutes);
+app.use('/api/v1/scraper', scraperRoutes);
+app.use('/api/v1/recommendation', recommendationRoutes);
+app.use('/api/v1/submit-report', reportAnalysisRoutes);
+app.use('/api/v1/visitors', visitorRoutes);
 
 // Error Handling
 app.use(errorHandler());

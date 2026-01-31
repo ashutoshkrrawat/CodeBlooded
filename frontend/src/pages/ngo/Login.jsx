@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 
 import { Mail, ShieldCheck } from "lucide-react";
-import { Link } from "react-router-dom";
+import {Link, useNavigate} from 'react-router-dom';
+import {toast} from 'sonner';
 
 export default function LoginNGO() {
   const [loading, setLoading] = useState(false);
@@ -13,6 +14,8 @@ export default function LoginNGO() {
     email: "",
     password: "",
   });
+
+  const navigate = useNavigate();
 
   const handleChange = (key, value) => {
     setForm({ ...form, [key]: value });
@@ -23,19 +26,25 @@ export default function LoginNGO() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/v1/ngo/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(
+          import.meta.env.VITE_SERVER_URL + '/api/v1/ngo/login',
+          {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(form),
+              credentials: 'include'
+          }
+      );
 
       if (!res.ok) throw new Error("Login failed");
 
       // handle success later (token, redirect, etc.)
-      alert("Logged in successfully!");
+      toast.success("Logged in successfully!");
+      localStorage.setItem('role', 'ngo');
+      window.location.href = '/';
+      // navigate('/')
     } catch (err) {
-      console.error(err);
-      alert("Invalid credentials");
+      toast.error(err?.message || err);
     } finally {
       setLoading(false);
     }

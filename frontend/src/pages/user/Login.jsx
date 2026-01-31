@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import {Link, useNavigate} from 'react-router-dom';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 
 import { Mail, ShieldCheck } from "lucide-react";
+import {toast} from 'sonner';
 
 export default function LoginUser() {
   const [loading, setLoading] = useState(false);
@@ -14,6 +15,8 @@ export default function LoginUser() {
     email: "",
     password: "",
   });
+
+  const navigate = useNavigate();
 
   const handleChange = (key, value) => {
     setForm({ ...form, [key]: value });
@@ -24,7 +27,7 @@ export default function LoginUser() {
     setLoading(true);
 
     try {
-      const res = await fetch(import.meta.env.VITE_SERVER_URL + "/user/login", {
+      const res = await fetch(import.meta.env.VITE_SERVER_URL + "/api/v1/user/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -33,11 +36,13 @@ export default function LoginUser() {
 
       if (!res.ok) throw new Error("Login failed");
 
-      alert("Logged in successfully");
+      toast.success("Logged in successfully");
+      localStorage.setItem('role', 'user')
+        window.location.href = '/';
       // later → redirect to dashboard
     } catch (err) {
       console.error(err);
-      alert("Invalid email or password");
+      toast.error(err?.message || err);
     } finally {
       setLoading(false);
     }

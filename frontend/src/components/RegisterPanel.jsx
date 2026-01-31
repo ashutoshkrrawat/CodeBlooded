@@ -5,7 +5,7 @@ export default function RegisterPanel() {
     <div className="space-y-3">
       
       <Link
-        to="/register/ngo"
+        to="/signup/ngo"
         className="flex items-center gap-3 p-4 rounded-xl border transition"
         style={{
           backgroundColor: 'var(--accent-blue-light)',
@@ -30,7 +30,7 @@ export default function RegisterPanel() {
       </Link>
 
       <Link
-        to="/register/government"
+        to="/signup/user"
         className="flex items-center gap-3 p-4 rounded-xl border transition"
         style={{
           backgroundColor: 'var(--accent-indigo-light)',
@@ -47,35 +47,10 @@ export default function RegisterPanel() {
           className="w-10 h-10 rounded-full text-white flex items-center justify-center"
           style={{ backgroundColor: 'var(--accent-indigo)' }}
         >
-          🏛️
+          👤
         </span>
         <span className="font-medium" style={{ color: 'var(--card-foreground)' }}>
-          Register as Government
-        </span>
-      </Link>
-
-      <Link
-        to="/register/donor"
-        className="flex items-center gap-3 p-4 rounded-xl border transition"
-        style={{
-          backgroundColor: 'var(--accent-green-light)',
-          borderColor: 'var(--accent-green-lighter)',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'var(--accent-green-lighter)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'var(--accent-green-light)';
-        }}
-      >
-        <span 
-          className="w-10 h-10 rounded-full text-white flex items-center justify-center"
-          style={{ backgroundColor: 'var(--accent-green)' }}
-        >
-          💰
-        </span>
-        <span className="font-medium" style={{ color: 'var(--card-foreground)' }}>
-          Register as Donor
+          Register as User
         </span>
       </Link>
 

@@ -6,6 +6,7 @@ import initializeSocket from './sockets/index.js';
 import registerSockets from './sockets/socket.js';
 import {startIssueCron} from './cron/issue.cron.js';
 import {startSevereIssueAlertCron} from './cron/emailAlert.cron.js';
+import {startScraperCron} from './cron/scrapper.cron.js';
 
 dotenv.config({
     path: `./.env`,
@@ -22,8 +23,9 @@ connectToDatabase().then(() => {
         console.log(`✅ Server is running on port ${port}`);
 
         //! Starting all the CRON Jobs
-        startIssueCron()
+        startIssueCron();
         startSevereIssueAlertCron();
+        startScraperCron();
     });
 });
 

@@ -1,4 +1,4 @@
-import {GoogleGenAI} from '@google/genai';
+import {GoogleGenerativeAI} from '@google/generative-ai';
 import {z} from 'zod';
 import {zodToJsonSchema} from 'zod-to-json-schema';
 import dotenv from 'dotenv';
@@ -172,18 +172,21 @@ const getRefinedAnalysis = async (originalText, mlOutput) => {
             return mlOutput;
         }
 
-        const ai = new GoogleGenAI({apiKey});
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-2.5-flash-lite',
+            systemInstruction:
+                'You are an expert Crisis Response Coordinator. Your task is to validate and refine the preliminary analysis provided by an automated ML system against the original source text.',
+        });
 
         const prompt = `
-        You are an expert Crisis Response Coordinator.
-        Your task is to validate and refine the preliminary analysis provided by an automated ML system against the original source text.
-
         Instructions:
         1. Analyze the 'Original Source Text' to understand the ground truth of the situation.
         2. Review the 'Preliminary ML Analysis'.
         3. Correct any inaccuracies in the ML analysis (e.g., wrong location, incorrect crisis type, understated severity) based on the text.
         4. If the ML analysis missed critical details (like specific casualty counts, infrastructure damage, or urgency cues), add them.
         5. Ensure the final output strictly follows the required JSON structure.
+        6. Be formal in explanation and avoid unnecessary use of emojis.
         
         Original Source Text:
         "${originalText}"
@@ -192,24 +195,15 @@ const getRefinedAnalysis = async (originalText, mlOutput) => {
         ${JSON.stringify(mlOutput)}
         `;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: prompt,
-            config: {
+        const result = await model.generateContent({
+            contents: [{role: 'user', parts: [{text: prompt}]}],
+            generationConfig: {
                 responseMimeType: 'application/json',
                 responseSchema: crisisJsonSchema,
             },
         });
 
-        let responseText;
-        if (typeof response.text === 'function') {
-            responseText = response.text();
-        } else if (response.text) {
-            responseText = response.text;
-        } else {
-            responseText = JSON.stringify(response);
-        }
-
+        const responseText = result.response.text();
         const parsedJson = JSON.parse(responseText);
 
         const crisisData = crisisZodSchema.parse(parsedJson);
@@ -223,6 +217,126 @@ const getRefinedAnalysis = async (originalText, mlOutput) => {
             );
         }
         return mlOutput;
+    }
+};
+
+export const checkCrisisUpdate = async (newText, mlOutput, existingIssue) => {
+    try {
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-2.5-flash-lite',
+            systemInstruction: `You are an expert crisis analyst. Compare a NEW incoming report with an EXISTING recorded issue.
+            
+            Inputs:
+            1. New Report Text
+            2. ML Analysis of New Report
+            3. Existing Issue Data (from DB)
+
+            Task:
+            Determine if the new report provides NEW or UPDATED info (e.g., higher severity, new location details, different crisis type, more casualties).
+            - If it's effectively the same or less info, return has_updates=false.
+            - If there are material changes, return has_updates=true and the FULL updated analysis object (merging old and new info, prioritizing new facts).
+            
+            Return JSON matching the schema.`,
+        });
+
+        // Use a slightly modified schema that includes 'has_updates'
+        const updateSchema = {
+            type: 'object',
+            properties: {
+                has_updates: {type: 'boolean'},
+                updated_analysis: crisisJsonSchema, // Reuse existing schema definition
+            },
+            required: ['has_updates'],
+        };
+
+        const prompt = `
+        EXISTING ISSUE: ${JSON.stringify(existingIssue)}
+        
+        NEW REPORT: ${newText}
+        
+        NEW REPORT ML DATA: ${JSON.stringify(mlOutput)}
+        
+        Analyze for updates.
+        `;
+
+        const result = await model.generateContent({
+            contents: [{role: 'user', parts: [{text: prompt}]}],
+            generationConfig: {
+                responseMimeType: 'application/json',
+                responseSchema: updateSchema,
+            },
+        });
+
+        const responseText = result.response.text();
+        return JSON.parse(responseText);
+    } catch (error) {
+        console.error('Gemini Update Check Failed:', error);
+        return {has_updates: false};
+    }
+};
+
+export const verifyNgoNeeds = async (candidates) => {
+    try {
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-3-flash-preview',
+            systemInstruction: `You are a crisis resource allocator. Analyze NGOs to determine funding priority.
+            
+            Principles:
+            1. High Aggregate Severity of nearby crises increases priority.
+            2. Low Current Funds increases priority significantly.
+            3. High Funds decreases priority even if severity is high (they can handle it).
+            
+            Output a JSON object with a list of scored NGOs.`,
+        });
+
+        // Minimize tokens: Only send essential data for top candidates
+        const minimalInput = candidates.map((n) => ({
+            id: n._id,
+            funds: n.currentFund,
+            severity: n.metrics.totalSeverityPoints,
+            issues: n.metrics.activeIncidentsNearby,
+        }));
+
+        const schema = {
+            type: 'object',
+            properties: {
+                analysis: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            id: {type: 'string'},
+                            score: {
+                                type: 'number',
+                                description: 'Urgency score 0-100',
+                            },
+                            reason: {
+                                type: 'string',
+                                description: 'Brief reason for score',
+                            },
+                        },
+                        required: ['id', 'score'],
+                    },
+                },
+            },
+        };
+
+        const result = await model.generateContent({
+            contents: [
+                {role: 'user', parts: [{text: JSON.stringify(minimalInput)}]},
+            ],
+            generationConfig: {
+                responseMimeType: 'application/json',
+                responseSchema: schema,
+            },
+        });
+
+        return JSON.parse(result.response.text());
+    } catch (error) {
+        console.warn('Gemini NGO analysis failed:', error.message);
+        return {analysis: []};
     }
 };
 

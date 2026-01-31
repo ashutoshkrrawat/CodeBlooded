@@ -29,17 +29,6 @@ const issueSchema = new mongoose.Schema(
             min: 0,
             max: 1,
         },
-        pinCode: {
-            type: String,
-            trim: true,
-            required: true,
-            index: true,
-        },
-        location: {
-            type: String,
-            required: true,
-            trim: true,
-        },
         // GeoJSON for proximity searches
         coordinates: {
             type: {
@@ -49,7 +38,6 @@ const issueSchema = new mongoose.Schema(
             },
             coordinates: {
                 type: [Number], // [longitude, latitude]
-                index: '2dsphere',
             },
         },
         date: {
@@ -57,6 +45,7 @@ const issueSchema = new mongoose.Schema(
             default: Date.now,
             required: true,
         },
+
         handledBy: [
             {
                 type: mongoose.Schema.Types.ObjectId,
@@ -64,7 +53,38 @@ const issueSchema = new mongoose.Schema(
             },
         ],
         aiAnalysis: {
-            type: mongoose.Schema.Types.Mixed,
+            is_crisis: Boolean,
+            type_classification: {
+                type: {type: String},
+                confidence: Number,
+            },
+            location: {
+                name: String,
+                coordinates: {
+                    lat: Number,
+                    lon: Number,
+                },
+            },
+            severity: {
+                overall: Number,
+                dimensions: {
+                    human_impact: Number,
+                    infrastructure_damage: Number,
+                    geographic_scale: Number,
+                    temporal_urgency: Number,
+                },
+            },
+            urgency: {
+                level: String,
+                is_urgent: Boolean,
+            },
+            priority: {
+                level: String,
+                score: Number,
+            },
+            explanation: {
+                content: String,
+            },
         },
         isEmailSent: {
             type: Boolean,
@@ -91,6 +111,8 @@ const issueSchema = new mongoose.Schema(
     },
     {timestamps: true}
 );
+
+issueSchema.index({coordinates: '2dsphere'});
 
 const Issue = mongoose.model('Issue', issueSchema);
 export default Issue;
