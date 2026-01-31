@@ -11,6 +11,7 @@ import paymentRoutes from './routes/payment.routes.js';
 import crisisRoutes from './routes/crisis.routes.js';
 import scraperRoutes from './routes/scraper.routes.js';
 import recommendationRoutes from './routes/recommendation.routes.js';
+import visitorRoutes from './routes/visitors.routes.js';
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/v1/payment', paymentRoutes);
 app.use('/api/v1/crisis', crisisRoutes);
 app.use('/api/v1/scraper', scraperRoutes);
 app.use('/api/v1/recommendation', recommendationRoutes);
+app.use('/api/v1/visitors', visitorRoutes);
 
 // Error Handling
 app.use(errorHandler());

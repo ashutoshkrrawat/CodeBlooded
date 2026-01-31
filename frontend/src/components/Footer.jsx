@@ -32,20 +32,16 @@ export default function Footer() {
     useEffect(() => {
         const trackVisitor = async () => {
             try {
-                const response = await fetch('/api/visitors', {
+                const response = await fetch(import.meta.env.VITE_SERVER_URL + '/api/v1/visitors/count', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        timestamp: new Date().toISOString(),
-                        userAgent: navigator.userAgent,
-                    }),
+                    }
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    setVisitorCount(data.totalVisitors || data.count || 0);
+                    setVisitorCount(data?.visitors || data.count || 0);
                 }
             } catch (error) {
                 console.error('Failed to track visitor:', error);
