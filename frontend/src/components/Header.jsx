@@ -276,7 +276,7 @@ export default function Header() {
 
                     {/* Auth Buttons - show when no role */}
                     {!role && (
-                        <nav className="flex items-center gap-6">
+                        <nav className="flex items-center gap-6 shadow-lg">
                             <Link
                                 to="/signup/ngo"
                                 className="auth-button px-4 py-2 rounded-full border-2"
