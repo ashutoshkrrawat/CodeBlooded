@@ -51,7 +51,6 @@ export const registerNGO = asyncHandler(async (req, res) => {
     );
 });
 
-
 export const loginNGO = asyncHandler(async (req, res) => {
     const {email, password} = req.body;
 
@@ -79,7 +78,8 @@ export const loginNGO = asyncHandler(async (req, res) => {
     ngo.refreshToken = refreshToken;
     await ngo.save();
 
-    return res.cookie('accessToken', accessToken, cookieOptions)
+    return res
+        .cookie('accessToken', accessToken, cookieOptions)
         .cookie('refreshToken', refreshToken, cookieOptions)
         .status(statusCode.OK)
         .json(
@@ -346,13 +346,13 @@ export const submitReport = asyncHandler(async (req, res) => {
 });
 
 export const getMyReports = asyncHandler(async (req, res) => {
-    const ngoCode = req.ngoCode;
+    const {ngoId} = req.body;
 
-    if (!ngoCode) {
-        throw new ApiError(statusCode.BAD_REQUEST, 'NGO Code is required');
+    if (!ngoId) {
+        throw new ApiError(statusCode.BAD_REQUEST, 'NGO ID is required');
     }
 
-    const ngo = await NGO.findOne({NGOcode: ngoCode});
+    const ngo = await NGO.findById(ngoId);
 
     if (!ngo) {
         throw new ApiError(statusCode.NOT_FOUND, 'NGO not found');
@@ -367,8 +367,8 @@ export const getMyReports = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 statusCode.OK,
-                reports,
-                'Reports fetched successfully'
+                'Reports fetched successfully',
+                reports
             )
         );
 });
@@ -395,4 +395,53 @@ export const uploadReportImages = asyncHandler(async (req, res) => {
             'Images uploaded successfully'
         )
     );
+});
+
+export const getAllNGOs = async (req, res, next) => {
+    try {
+        const ngos = await NGO.find({})
+            .select('-password -documents -__v -updatedAt')
+            .lean();
+
+        if (!ngos) {
+            throw new ApiError(404, 'No NGOs found');
+        }
+
+        return res.status(200).json(
+            new ApiResponse(200, 'NGOs fetched successfully', {
+                count: ngos.length,
+                ngos,
+            })
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getNGOPublicProfile = asyncHandler(async (req, res) => {
+    const {ngoId} = req.params;
+
+    if (!ngoId) {
+        throw new ApiError(statusCode.BAD_REQUEST, 'NGO ID is required');
+    }
+
+    const ngo = await NGO.findById(ngoId)
+        .select(
+            'name type NGOcode email address phone about website currentFund createdAt'
+        )
+        .lean();
+
+    if (!ngo) {
+        throw new ApiError(statusCode.NOT_FOUND, 'NGO not found');
+    }
+
+    return res
+        .status(statusCode.OK)
+        .json(
+            new ApiResponse(
+                statusCode.OK,
+                ngo,
+                'NGO public profile fetched successfully'
+            )
+        );
 });
